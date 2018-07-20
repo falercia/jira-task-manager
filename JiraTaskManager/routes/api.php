@@ -1,18 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
-
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
-
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+$this->group(['prefix' => 'v1'], function() {
+   $this->get('sync-issues-from-board/{boardId}', 'API\v1\JiraRequestController@syncAllIssuesFromBoard');
+   $this->get('boards', 'API\v1\JiraRequestController@getAllBoards');
+   
+   $this->post('sync-all', 'API\v1\JiraRequestController@syncAll');
 });
