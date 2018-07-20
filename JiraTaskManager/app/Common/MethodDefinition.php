@@ -19,6 +19,7 @@ class MethodDefinition {
    public function getMethod($data = array()) {
       return ['AllIssuesFromBoard' => $this->getAllIssuesFromBoard(isset($data['board_id']) ? $data['board_id'] : null),
           'AllBoards' => $this->getAllBoards(),
+          'AllUsers' => $this->getUsers(),
       ];
    }
 
@@ -29,7 +30,13 @@ class MethodDefinition {
    }
 
    private function getAllIssuesFromBoard($boardId) {
-      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=assignee,description,summary,status,customfield_10110,customfield_10108,worklog,created',
+      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created',
+          'http_verb' => 'GET'
+      ];
+   }
+
+   private function getUsers() {
+      return ['url' => $this->baseUrl . '/rest/api/latest/user/search?startAt=0&maxResults=1000&username=%',
           'http_verb' => 'GET'
       ];
    }

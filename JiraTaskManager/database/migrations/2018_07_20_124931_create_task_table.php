@@ -14,7 +14,9 @@ class CreateTaskTable extends Migration {
          $table->string('title', 1000);
          $table->string('assignee_key', 1000)->nullable();
          $table->string('assignee_name', 1000)->nullable();
-         $table->date('created_at_jira');
+         $table->string('tester_assignee_key', 1000)->nullable();
+         $table->string('tester_assignee_name', 1000)->nullable();
+         $table->date('jira_created_at');
          $table->date('initial_date')->nullable();
          $table->date('deadline')->nullable();
          $table->integer('status_id');

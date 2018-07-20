@@ -9,6 +9,7 @@ use Common\RequestMethod;
 use App\Models\Task;
 use App\Models\TaskWorkLog;
 use App\Models\Board;
+use App\User;
 use Carbon\Carbon;
 
 class JiraRequestController extends Controller {
@@ -25,6 +26,30 @@ class JiraRequestController extends Controller {
       $data['headers'] = $this->methodDefinition->getHeaders();
 
       return $data;
+   }
+
+   public function syncUsers() {
+      $data = $this->getCommonMethodData('AllUsers');
+
+      $response = RequestMethod::sendRequest($data);
+
+
+      if ($response['http_code'] == '200') {
+         $users = json_decode($response['response_body'], true);
+         foreach ($users as $user) {
+            if (strpos($user['emailAddress'], '@hubchain.io')) {
+               $tempUser = array(
+                   'id' => $user['accountId'],
+                   'name' => $user['displayName'],
+                   'email' => $user['emailAddress'],
+                   'jira_key' => $user['key'],
+                   'is_resource' => in_array($user['emailAddress'], array('alex.ritchie@hubchain.io', 'admin@hubchain.io', 'rodrigo.pimenta@hubchain.io')) ? 'N' : 'Y',
+               );
+
+               User::updateOrCreate(['id' => $tempUser['id']], $tempUser);
+            }
+         }
+      }
    }
 
    public function getAllBoards() {
@@ -63,7 +88,9 @@ class JiraRequestController extends Controller {
                 'title' => $issue['fields']['summary'],
                 'assignee_key' => $issue['fields']['assignee']['key'],
                 'assignee_name' => $issue['fields']['assignee']['displayName'],
-                'created_at_jira' => Carbon::parse($issue['fields']['created']),
+                'tester_assignee_key' => isset($issue['fields']['customfield_10060']['key']) ? $issue['fields']['customfield_10060']['key'] : '',
+                'tester_assignee_name' => isset($issue['fields']['customfield_10060']['displayName']) ? $issue['fields']['customfield_10060']['displayName'] : '',
+                'jira_created_at' => Carbon::parse($issue['fields']['created']),
                 'initial_date' => $issue['fields']['customfield_10110'],
                 'deadline' => $issue['fields']['customfield_10108'],
                 'status_id' => $issue['fields']['status']['id'],
@@ -95,6 +122,7 @@ class JiraRequestController extends Controller {
    }
 
    public function syncAll(Request $request) {
+      $this->syncUsers();
       $this->getAllBoards();
 
       $boards = Board::where('sync_board', 'Y')
@@ -105,6 +133,10 @@ class JiraRequestController extends Controller {
       }
 
       return response()->json('OK');
+   }
+
+   public function getUserNoTask() {
+      
    }
 
 }
