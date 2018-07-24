@@ -11,6 +11,7 @@ use App\Models\TaskWorkLog;
 use App\Models\Board;
 use App\User;
 use Carbon\Carbon;
+use DB;
 
 class JiraRequestController extends Controller {
 
@@ -95,6 +96,8 @@ class JiraRequestController extends Controller {
                 'deadline' => $issue['fields']['customfield_10108'],
                 'status_id' => $issue['fields']['status']['id'],
                 'status_name' => $issue['fields']['status']['name'],
+                'story_points' => isset($issue['fields']['customfield_10043']) ? $issue['fields']['customfield_10043'] : null,
+                'finish_date' => isset($issue['fields']['customfield_10111']) ? $issue['fields']['customfield_10111'] : null,
             );
 
             Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
@@ -136,7 +139,88 @@ class JiraRequestController extends Controller {
    }
 
    public function getUserNoTask() {
+      $indicator = array();
+      $indicator['id'] = 'users_no_task';
+      $indicator['title'] = 'Usuários sem tarefa';
+      $indicator['icon'] = 'fa fa-fw fa-file';
+      $indicator['color'] = '#c7ddef';
+      $indicator['columns'] = array('ID', 'Nome', 'E-mail');
+      $indicator['tooltip'] = 'Usuários que estão sem tarefas atribuidas no status In Progress ou que estão testando tarefa sem estar atribuido como Tester.';
+
+      $indicator['data'] = DB::select('SELECT 
+                              u.id, u.name, u.email
+                          FROM
+                              jira_task_manager.user u
+                           WHERE u.is_resource = \'Y\' 
+                            AND NOT EXISTS (select 1
+                                               from jira_task_manager.task t
+                                                                  where (t.assignee_key = u.jira_key and t.status_id = 3)
+                                                 or (t.status_id = 10004 and t.tester_assignee_key = u.jira_key)
+                  )');
+
+      return $indicator;
+   }
+
+   public function getTasksWithoutDate() {
+      $indicator = array();
+      $indicator['id'] = 'tasks_without_date';
+      $indicator['title'] = 'Tarefas sem prazo';
+      $indicator['icon'] = 'fa fa-fw fa-file';
+      $indicator['color'] = '#c7ddef';
+      $indicator['columns'] = array('ID', 'Key', 'Tarefa', 'Atribuída a', 'ID Status', 'Status');
+      $indicator['tooltip'] = 'Tarefas que estão sem prazo inicial ou final definidos (todos os status).';
+
+      $indicator['data'] = DB::select('SELECT 
+                                             t.id,
+                                             t.key,
+                                             t.title,
+                                             t.assignee_name,
+                                             t.status_id,
+                                             t.status_name
+                                         FROM
+                                             jira_task_manager.task t
+                                         WHERE
+                                             (t.initial_date IS NULL
+                                                 OR t.deadline IS NULL)');
+
+      return $indicator;
+   }
+
+   public function getTasksRunningWithoutDate() {
+      $indicator = array();
+      $indicator['id'] = 'tasks_running_without_date';
+      $indicator['title'] = 'Tarefas em produção sem prazo';
+      $indicator['icon'] = 'fa fa-fw fa-file';
+      $indicator['color'] = '#c7ddef';
+      $indicator['columns'] = array('ID', 'Nome', 'E-mail');
+      $indicator['tooltip'] = 'São tarefas que estão sendo executadas sem prazo no estado In Progress ou em teste.';
+
+      $indicator['data'] = DB::select('SELECT 
+                                             t.id as ID,
+                                             t.key as "Key",
+                                             t.title as "Título",
+                                             t.assignee_name as "Atribuida a",
+                                             t.status_id as "ID Status",
+                                             t.status_name as "Status"
+                                      FROM
+                                          jira_task_manager.task t
+                                      WHERE
+                                          (t.initial_date IS NULL OR t.deadline IS NULL)
+                                       AND t.status_name in (\'Test\', \'In Progress\')');
+
+      return $indicator;
+   }
+
+   public function getIndicators() {
+      $indicators = array();
+
+      array_push($indicators, $this->getUserNoTask());
+      array_push($indicators, $this->getTasksWithoutDate());
+      array_push($indicators, $this->getTasksRunningWithoutDate());
       
+     // dd($indicators);
+
+      return view('admin.indicators', compact('indicators'));
    }
 
 }

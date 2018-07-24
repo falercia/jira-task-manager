@@ -21,6 +21,8 @@ class CreateTaskTable extends Migration {
          $table->date('deadline')->nullable();
          $table->integer('status_id');
          $table->string('status_name');
+         $table->double('story_points')->nullable();
+         $table->date('finish_date')->nullable();
 
          $table->timestamps();
 
