@@ -33,7 +33,8 @@ class MethodDefinition {
    /*
     */
    private function getAllIssuesFromBoard($boardId) {
-      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created,customfield_10043,customfield_10111',
+      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created'
+          . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113',
           'http_verb' => 'GET'
       ];
    }

@@ -1,25 +1,37 @@
 @extends('adminlte::page')
 
-@section('title', 'Dashboard')
+@section('title', 'Produção')
 
 @section('content_header')
-
+<style>
+   .modal-body{
+      max-height: calc(100vh - 400px);
+      overflow-y: auto;
+      overflow-x: auto;
+   }
+</style>
 @stop
 
 @section('content')
 
 <div class="row">
    @foreach($indicators as $indicator)
-   <div class="col-md-4">
-      <div style="background-color:{{ $indicator['color'] }}; width:100%; height:100px; border-radius: 1em; align-items: center; display: flex; margin-bottom: 1em;" title="{{ $indicator['tooltip'] }}">
-         <i class="fa fa-fw fa-file" style="font-size: 3.5em;"></i>
-         <span style="font-size: 2.5em">{{ $indicator['title'] }}</span>
-         <span style="font-size: 2.5em"> : </span>
-         <span style="font-size: 2.5em">{{ count($indicator['data']) }}</span>
+   <div class="col-md-3">
+      <div style="background-color: {{ $indicator['color'] }};height:100%;border-radius:5px;margin-bottom: 1em;" title="{{ $indicator['tooltip'] }}">
+         <div style="width:100%;display:block;height:50px;">
+            <i class="fab fa-accusoft" style="float:left;font-size: 80px;padding-left: 10px;padding-top: 5px;"></i>
+            <p style="padding-right:30px;text-align: right;font-size: 32px;font-family:Helvetica;color: #6b6b6b;">{{ $indicator['title'] }}</p>
+         </div>
+         <div style="width:100%;display:block;">
+            <p style="float: none;text-align: right;padding-right: 30px;padding-top: 0px;font-size: 26px;color: #6b6b6b;font-family: Helvetica;">{{ count($indicator['data']) }}</p>
+         </div>
+         @if (count($indicator['data']) > 0)
+            <div style="height:40px;">
+               <button type="button" class="btn btn-primary" style="float: right;margin-right: 30px;" data-toggle="modal" data-target="#modal_{{$indicator['id'] }}">Detalhes</button>
+            </div>
+         @endif
       </div>
-      <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#modal_{{$indicator['id'] }}">
-         Ver mais
-      </button>
+     
    </div>
    <div class="modal fade" id="modal_{{$indicator['id'] }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
       <div class="modal-dialog" role="document">
@@ -33,7 +45,13 @@
                   @foreach($indicator['columns'] as $column)
                   <th>{{ $column }}</th>
                   @endforeach
-
+                  @for ($i = 0; $i < count($indicator['data']); $i++)
+                  <tr>
+                     @foreach($indicator['data'][$i] as $key => $value)
+                     <td>{{$value}}</td>
+                     @endforeach
+                  </tr>
+                  @endfor
                </table>
             </div>
             <div class="modal-footer">

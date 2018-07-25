@@ -30,9 +30,9 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>Hubchain</b>',
 
-    'logo_mini' => '<b>A</b>LT',
+    'logo_mini' => '<b>H</b>C',
 
     /*
     |--------------------------------------------------------------------------
@@ -113,6 +113,11 @@ return [
             'text'        => 'Produção',
             'url'         => 'admin/indicators',
             'icon'        => 'file',
+        ],
+        [
+            'text'        => 'Apontamento de Horas',
+            'url'         => 'admin/time_tracking',
+            'icon'        => 'fa fa-clock-o',
         ],
         'REUNIÕES',
         [

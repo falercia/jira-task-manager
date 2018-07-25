@@ -19,10 +19,14 @@ class CreateTaskTable extends Migration {
          $table->date('jira_created_at');
          $table->date('initial_date')->nullable();
          $table->date('deadline')->nullable();
+         $table->date('test_initial_date')->nullable();
+         $table->date('test_deadline')->nullable();
          $table->integer('status_id');
          $table->string('status_name');
          $table->double('story_points')->nullable();
          $table->date('finish_date')->nullable();
+         $table->integer('status_category_id');
+         $table->string('status_category_name');
 
          $table->timestamps();
 
