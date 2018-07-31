@@ -101,6 +101,9 @@ class JiraRequestController extends Controller {
                 'status_category_name' => $issue['fields']['status']['statusCategory']['name'],
                 'test_initial_date' => $issue['fields']['customfield_10112'],
                 'test_deadline' => $issue['fields']['customfield_10113'],
+                'time_spent_seconds' => isset($issue['fields']['timetracking']['timeSpentSeconds']) ? $issue['fields']['timetracking']['timeSpentSeconds'] : null,
+                'time_spent' => isset($issue['fields']['timetracking']['timeSpent']) ? $issue['fields']['timetracking']['timeSpent'] : null,
+                
             );
 
             Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
@@ -114,7 +117,9 @@ class JiraRequestController extends Controller {
                       'author_name' => $worklog['author']['displayName'],
                       'created_at_jira' => Carbon::parse($worklog['created']),
                       'time_spent_seconds' => $worklog['timeSpentSeconds'],
+                      'time_spent' => $worklog['timeSpent'],
                       'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
+                      'started_at_jira' => Carbon::parse($worklog['started']),
                   );
 
                   TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);

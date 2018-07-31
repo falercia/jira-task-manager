@@ -119,6 +119,11 @@ return [
             'url'         => 'admin/time_tracking',
             'icon'        => 'fa fa-clock-o',
         ],
+        [
+            'text'        => 'Produtividade',
+            'url'         => 'admin/productivity',
+            'icon'        => 'fa fa-clock-o',
+        ],
         'REUNIÕES',
         [
             'text' => 'Reunião diária',
@@ -168,10 +173,11 @@ return [
                 ],
             ],
         ],
-        'LABELS',
+        'OUTROS',
         [
-            'text'       => 'Important',
+            'text'       => 'Ausências',
             'icon_color' => 'red',
+            'url'         => 'admin/productivity',
         ],
         [
             'text'       => 'Warning',

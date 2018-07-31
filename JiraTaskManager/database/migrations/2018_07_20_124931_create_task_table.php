@@ -27,6 +27,8 @@ class CreateTaskTable extends Migration {
          $table->date('finish_date')->nullable();
          $table->integer('status_category_id');
          $table->string('status_category_name');
+         $table->bigInteger('time_spent_seconds')->nullable();
+         $table->string('time_spent', 100)->nullable();
 
          $table->timestamps();
 

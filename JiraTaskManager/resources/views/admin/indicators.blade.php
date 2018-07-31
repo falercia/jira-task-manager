@@ -13,7 +13,7 @@
 @stop
 
 @section('content')
-
+<example-component></example-component>
 <div class="row">
    @foreach($indicators as $indicator)
    <div class="col-md-3">

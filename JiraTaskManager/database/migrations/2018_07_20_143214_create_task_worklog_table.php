@@ -14,7 +14,9 @@ class CreateTaskWorkLogTable extends Migration {
          $table->string('author_name', 300);
          $table->string('comment', 3000)->nullable();
          $table->date('created_at_jira');
+         $table->date('started_at_jira');
          $table->bigInteger('time_spent_seconds');
+         $table->string('time_spent', 100);
          $table->timestamps();
          
          $table->primary('id');

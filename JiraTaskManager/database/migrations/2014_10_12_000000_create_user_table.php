@@ -14,6 +14,7 @@ class CreateUserTable extends Migration {
          $table->string('password')->nullable();
          $table->string('jira_key', 500)->nullable();
          $table->enum('is_resource', ['Y', 'N'])->default('Y');
+         $table->integer('expected_time_per_day_secondes')->nullable();
          $table->timestamps();
 
          $table->primary('id');

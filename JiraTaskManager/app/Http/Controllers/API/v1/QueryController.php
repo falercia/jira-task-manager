@@ -140,12 +140,10 @@ class QueryController extends Controller {
 
       return view('admin.indicators', compact('indicators'));
    }
-   
-   
 
    public function getUsersTimeTracking(Request $request) {
       $indicators = array();
-      
+
       $indicator['users_timetracking'] = DB::select('SELECT 
                                              t.key,
                                              t.title,
@@ -158,6 +156,11 @@ class QueryController extends Controller {
                                         AND DATE(NOW()) = t.deadline
                                         AND t.status_category_id NOT IN (3)');
       return view('admin.time_tracking');
+   }
+
+   public function showProductivityScreen() {
+      $cutDateMessage = 'Disponível apenas para datas a partir de 23/07/2018';
+      return view('admin.productivity', compact('cutDateMessage'));
    }
 
 }
