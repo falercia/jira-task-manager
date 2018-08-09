@@ -11,6 +11,8 @@ use App\Models\TaskWorkLog;
 use App\Models\Board;
 use App\User;
 use Carbon\Carbon;
+use DB;
+use Illuminate\Support\Collection;
 
 class JiraRequestController extends Controller {
 
@@ -52,7 +54,7 @@ class JiraRequestController extends Controller {
       }
    }
 
-   public function getAllBoards() {
+   public function syncAllBoards() {
       $data = $this->getCommonMethodData('AllBoards');
 
       $response = RequestMethod::sendRequest($data);
@@ -72,7 +74,7 @@ class JiraRequestController extends Controller {
       }
    }
 
-   public function syncAllIssuesFromBoard($boardId) {
+   public function getAllIssuesFromBoard($boardId) {
 
       $data = $this->getCommonMethodData('AllIssuesFromBoard', array('board_id' => $boardId));
 
@@ -80,70 +82,113 @@ class JiraRequestController extends Controller {
 
       if ($response['http_code'] == '200') {
          $issues = json_decode($response['response_body'], true)['issues'];
-         foreach ($issues as $issue) {
-            $tempIssue = array(
-                'id' => $issue['id'],
-                'board_id' => $boardId,
-                'key' => $issue['key'],
-                'title' => $issue['fields']['summary'],
-                'assignee_key' => $issue['fields']['assignee']['key'],
-                'assignee_name' => $issue['fields']['assignee']['displayName'],
-                'tester_assignee_key' => isset($issue['fields']['customfield_10060']['key']) ? $issue['fields']['customfield_10060']['key'] : '',
-                'tester_assignee_name' => isset($issue['fields']['customfield_10060']['displayName']) ? $issue['fields']['customfield_10060']['displayName'] : '',
-                'jira_created_at' => Carbon::parse($issue['fields']['created']),
-                'initial_date' => $issue['fields']['customfield_10110'],
-                'deadline' => $issue['fields']['customfield_10108'],
-                'status_id' => $issue['fields']['status']['id'],
-                'status_name' => $issue['fields']['status']['name'],
-                'story_points' => isset($issue['fields']['customfield_10043']) ? $issue['fields']['customfield_10043'] : null,
-                'finish_date' => isset($issue['fields']['customfield_10111']) ? $issue['fields']['customfield_10111'] : null,
-                'status_category_id' => $issue['fields']['status']['statusCategory']['id'],
-                'status_category_name' => $issue['fields']['status']['statusCategory']['name'],
-                'test_initial_date' => $issue['fields']['customfield_10112'],
-                'test_deadline' => $issue['fields']['customfield_10113'],
-                'time_spent_seconds' => isset($issue['fields']['timetracking']['timeSpentSeconds']) ? $issue['fields']['timetracking']['timeSpentSeconds'] : null,
-                'time_spent' => isset($issue['fields']['timetracking']['timeSpent']) ? $issue['fields']['timetracking']['timeSpent'] : null,
-                
-            );
-
-            Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
-
-            if ($issue['fields']['worklog']['total'] > 0) {
-               foreach ($issue['fields']['worklog']['worklogs'] as $worklog) {
-                  $tempWorkLog = array(
-                      'id' => $worklog['id'],
-                      'task_id' => $worklog['issueId'],
-                      'author_key' => $worklog['author']['key'],
-                      'author_name' => $worklog['author']['displayName'],
-                      'created_at_jira' => Carbon::parse($worklog['created']),
-                      'time_spent_seconds' => $worklog['timeSpentSeconds'],
-                      'time_spent' => $worklog['timeSpent'],
-                      'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
-                      'started_at_jira' => Carbon::parse($worklog['started']),
-                  );
-
-                  TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
-               }
-            }
-         }
+         $this->syncIssue($issues, $boardId);
          return response()->json('OK!');
       } else {
          return response()->json('Fail');
       }
    }
 
+   public function getIssue($key) {
+      $data = $this->getCommonMethodData('Issue', array('key' => $key));
+
+      $response = RequestMethod::sendRequest($data);
+
+      if ($response['http_code'] == '200') {
+         $issue = json_decode($response['response_body'], true);
+         $this->syncIssue(array($issue));
+         return response()->json('OK!');
+      } else {
+         return response()->json('Fail');
+      }
+   }
+
+   private function syncIssue($issues, $boardId = null) {
+      foreach ($issues as $issue) {
+         $tempIssue = array(
+             'id' => $issue['id'],
+             'key' => $issue['key'],
+             'title' => $issue['fields']['summary'],
+             'assignee_key' => $issue['fields']['assignee']['key'],
+             'assignee_name' => $issue['fields']['assignee']['displayName'],
+             'tester_assignee_key' => isset($issue['fields']['customfield_10060']['key']) ? $issue['fields']['customfield_10060']['key'] : '',
+             'tester_assignee_name' => isset($issue['fields']['customfield_10060']['displayName']) ? $issue['fields']['customfield_10060']['displayName'] : '',
+             'jira_created_at' => Carbon::parse($issue['fields']['created']),
+             'initial_date' => $issue['fields']['customfield_10110'],
+             'deadline' => $issue['fields']['customfield_10108'],
+             'status_id' => $issue['fields']['status']['id'],
+             'status_name' => $issue['fields']['status']['name'],
+             'story_points' => isset($issue['fields']['customfield_10043']) ? $issue['fields']['customfield_10043'] : null,
+             'finish_date' => isset($issue['fields']['customfield_10111']) ? $issue['fields']['customfield_10111'] : null,
+             'status_category_id' => $issue['fields']['status']['statusCategory']['id'],
+             'status_category_name' => $issue['fields']['status']['statusCategory']['name'],
+             'test_initial_date' => $issue['fields']['customfield_10112'],
+             'test_deadline' => $issue['fields']['customfield_10113'],
+             'time_spent_seconds' => isset($issue['fields']['timetracking']['timeSpentSeconds']) ? $issue['fields']['timetracking']['timeSpentSeconds'] : null,
+             'time_spent' => isset($issue['fields']['timetracking']['timeSpent']) ? $issue['fields']['timetracking']['timeSpent'] : null,
+         );
+
+         if (!is_null($boardId)) {
+            $tempIssue['board_id'] = $boardId;
+         }
+
+         Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
+
+         if ($issue['fields']['worklog']['total'] > 0) {
+            foreach ($issue['fields']['worklog']['worklogs'] as $worklog) {
+               $tempWorkLog = array(
+                   'id' => $worklog['id'],
+                   'task_id' => $worklog['issueId'],
+                   'author_key' => $worklog['author']['key'],
+                   'author_name' => $worklog['author']['displayName'],
+                   'created_at_jira' => Carbon::parse($worklog['created']),
+                   'time_spent_seconds' => $worklog['timeSpentSeconds'],
+                   'time_spent' => $worklog['timeSpent'],
+                   'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
+                   'started_at_jira' => Carbon::parse($worklog['started']),
+               );
+
+               TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
+            }
+         }
+      }
+   }
+
    public function syncAll(Request $request) {
       $this->syncUsers();
-      $this->getAllBoards();
+      $this->syncAllBoards();
 
       $boards = Board::where('sync_board', 'Y')
               ->get();
 
       foreach ($boards as $board) {
-         $this->syncAllIssuesFromBoard($board['id']);
+         $this->getAllIssuesFromBoard($board['id']);
       }
 
       return response()->json('OK');
+   }
+
+   public function test() {
+      $initialDate = '23/07/2018';
+      $finalDate = '27/07/2018';
+      $return = DB::select('SELECT 
+                                 author_name,
+                                 started_at_jira,
+                                 SUM(time_spent_seconds) AS total,
+                                 SUM(time_spent_seconds) / 60 / 60 AS total_h
+                             FROM
+                                 jira_task_manager.task_worklog t
+                             WHERE
+                                 t.started_at_jira BETWEEN STR_TO_DATE(\''. $initialDate . '\', \'%d/%m/%Y\') AND STR_TO_DATE(\'' . $finalDate .'\', \'%d/%m/%Y\')
+                             GROUP BY author_name , started_at_jira
+                             ORDER BY t.started_at_jira, t.author_name'); 
+      
+      $collection = collect($return);
+
+      $grouped = $collection->groupBy('started_at_jira');
+      $grouped->toArray();
+      //$test = gmdate('H:i:s', $seconds);
+      return response()->json($grouped);
    }
 
 }

@@ -142,20 +142,51 @@ class QueryController extends Controller {
    }
 
    public function getUsersTimeTracking(Request $request) {
-      $indicators = array();
+      //Get from request
+      $initialDate = '30/07/2018';
+      $finalDate = '03/08/2018';
+      
 
-      $indicator['users_timetracking'] = DB::select('SELECT 
-                                             t.key,
-                                             t.title,
-                                             t.assignee_name,
-                                             t.status_name
-                                      FROM
-                                          jira_task_manager.task t
-                                      WHERE
-                                          t.deadline IS NOT NULL
-                                        AND DATE(NOW()) = t.deadline
-                                        AND t.status_category_id NOT IN (3)');
-      return view('admin.time_tracking');
+      $returnData = DB::select('SELECT 
+                                 author_name,
+                                  author_key,
+                                 started_at_jira,
+                                 SUM(time_spent_seconds) AS total,
+                                 sec_to_time(SUM(time_spent_seconds)) AS total_h
+                             FROM
+                                 jira_task_manager.task_worklog t
+                             WHERE
+                                 t.started_at_jira BETWEEN STR_TO_DATE(\'' . $initialDate . '\', \'%d/%m/%Y\') AND STR_TO_DATE(\'' . $finalDate . '\', \'%d/%m/%Y\')
+                             GROUP BY author_name, author_key, started_at_jira
+                             ORDER BY t.started_at_jira, t.author_name');
+
+      $collection = collect($returnData);
+
+      $times = $collection->groupBy('started_at_jira');
+      $times->toArray();
+      return view('admin.time_tracking', compact('initialDate', 'finalDate', 'times'));
+   }
+
+   public function getUserTimeTrackingDetail(Request $request) {
+      $requestData = $request->only(['user', 'date']);
+      $sql = 'SELECT 
+                  t.author_name,
+                  t.started_at_jira,
+                  t.time_spent_seconds AS total,
+                  sec_to_time(t.time_spent_seconds) as total_h,
+                  t.comment,
+                  concat(ta.key, \' - \', ta.title) as task
+              FROM
+                  jira_task_manager.task_worklog t
+              INNER JOIN jira_task_manager.task ta
+                              ON ta.id = t.task_id
+              WHERE t.author_key =\''. $requestData['user'] .'\'
+                AND t.started_at_jira = \''. $requestData['date'] .'\'
+              ORDER BY t.started_at_jira, t.id';
+      
+      $returnData = DB::select($sql);
+      
+      return response()->json($returnData);
    }
 
    public function showProductivityScreen() {

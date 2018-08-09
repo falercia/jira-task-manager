@@ -10,16 +10,29 @@ class MethodDefinition {
 
    private $token;
    private $baseUrl;
+   private $issueFields;
 
    public function __construct() {
       $this->token = env('JIRA_BASIC_AUTH');
       $this->baseUrl = env('JIRA_BASE_URL');
+      /**
+       * customfield_10110: initial_date
+       * customfield_10108: deadline
+       * customfield_10060: tester_assignee_key
+       * customfield_10043: story_points
+       * customfield_10111: finish_date
+       * customfield_10112: test_initial_date
+       * customfield_10113: test_deadline
+       */
+      $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created'
+              . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500';
    }
 
    public function getMethod($data = array()) {
       return ['AllIssuesFromBoard' => $this->getAllIssuesFromBoard(isset($data['board_id']) ? $data['board_id'] : null),
           'AllBoards' => $this->getAllBoards(),
           'AllUsers' => $this->getUsers(),
+          'Issue' => $this->getIssue(isset($data['key']) ? $data['key'] : null),
       ];
    }
 
@@ -29,18 +42,29 @@ class MethodDefinition {
       ];
    }
 
-   
-   /*
-    */
    private function getAllIssuesFromBoard($boardId) {
-      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created'
-          . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500',
+      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=' . $this->issueFields,
+          'http_verb' => 'GET'
+      ];
+   }
+   
+   private function getIssue($issueKey) {
+      return ['url' => $this->baseUrl .  '/rest/api/2/issue/' . $issueKey . '/?fields=' . $this->issueFields,
           'http_verb' => 'GET'
       ];
    }
 
    private function getUsers() {
       return ['url' => $this->baseUrl . '/rest/api/latest/user/search?startAt=0&maxResults=1000&username=%',
+          'http_verb' => 'GET'
+      ];
+   }
+   
+   /**
+    * Return current user data. Used by test credentials
+    */
+   private function getMySelf() {
+      return ['url' => $this->baseUrl . '/rest/api/2/myself',
           'http_verb' => 'GET'
       ];
    }
