@@ -8,12 +8,10 @@ namespace Common;
  */
 class MethodDefinition {
 
-   private $token;
    private $baseUrl;
    private $issueFields;
 
    public function __construct() {
-      $this->token = env('JIRA_BASIC_AUTH');
       $this->baseUrl = env('JIRA_BASE_URL');
       /**
        * customfield_10110: initial_date
@@ -33,6 +31,7 @@ class MethodDefinition {
           'AllBoards' => $this->getAllBoards(),
           'AllUsers' => $this->getUsers(),
           'Issue' => $this->getIssue(isset($data['key']) ? $data['key'] : null),
+          'MySelf' => $this->getMySelf(),
       ];
    }
 
@@ -69,10 +68,10 @@ class MethodDefinition {
       ];
    }
 
-   public function getHeaders() {
+   public function getHeaders($token) {
       return array(
           'Content-Type: application/json',
-          'Authorization: Basic ' . $this->token
+          'Authorization: Basic ' . $token
       );
    }
 

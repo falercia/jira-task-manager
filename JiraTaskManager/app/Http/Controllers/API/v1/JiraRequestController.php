@@ -17,15 +17,18 @@ use Illuminate\Support\Collection;
 class JiraRequestController extends Controller {
 
    private $methodDefinition;
+   private $token;
 
    public function __construct() {
       $this->methodDefinition = new MethodDefinition();
    }
 
-   private function getCommonMethodData($method, $data = array()) {
+   private function getCommonMethodData($method, $data = array(), $token = false) {
       $data['url'] = $this->methodDefinition->getMethod($data)[$method]['url'];
       $data['http_verb'] = $this->methodDefinition->getMethod($data)[$method]['http_verb'];
-      $data['headers'] = $this->methodDefinition->getHeaders();
+
+      $token = $token ? $token : session('token', false);
+      $data['headers'] = $this->methodDefinition->getHeaders($token);
 
       return $data;
    }
@@ -59,7 +62,6 @@ class JiraRequestController extends Controller {
 
       $response = RequestMethod::sendRequest($data);
 
-
       if ($response['http_code'] == '200') {
          $boards = json_decode($response['response_body'], true)['values'];
          foreach ($boards as $board) {
@@ -71,6 +73,10 @@ class JiraRequestController extends Controller {
 
             Board::updateOrCreate(['id' => $tempBoard['id']], $tempBoard);
          }
+
+         return response()->json('OK');
+      }else{
+         return response()->json($response);
       }
    }
 
@@ -168,6 +174,13 @@ class JiraRequestController extends Controller {
       return response()->json('OK');
    }
 
+   public function login(Request $request) {
+      $requestData = $request->only(['email', 'api_key']);
+      $encoded = base64_encode($requestData['email'] . ':' . $requestData['api_key']);
+
+      $data = $this->getCommonMethodData('MySelf', array());
+   }
+
    public function test() {
       $initialDate = '23/07/2018';
       $finalDate = '27/07/2018';
@@ -179,10 +192,10 @@ class JiraRequestController extends Controller {
                              FROM
                                  jira_task_manager.task_worklog t
                              WHERE
-                                 t.started_at_jira BETWEEN STR_TO_DATE(\''. $initialDate . '\', \'%d/%m/%Y\') AND STR_TO_DATE(\'' . $finalDate .'\', \'%d/%m/%Y\')
+                                 t.started_at_jira BETWEEN STR_TO_DATE(\'' . $initialDate . '\', \'%d/%m/%Y\') AND STR_TO_DATE(\'' . $finalDate . '\', \'%d/%m/%Y\')
                              GROUP BY author_name , started_at_jira
-                             ORDER BY t.started_at_jira, t.author_name'); 
-      
+                             ORDER BY t.started_at_jira, t.author_name');
+
       $collection = collect($return);
 
       $grouped = $collection->groupBy('started_at_jira');
