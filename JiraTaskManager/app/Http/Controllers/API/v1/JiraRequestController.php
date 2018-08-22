@@ -28,6 +28,7 @@ class JiraRequestController extends Controller {
       $data['http_verb'] = $this->methodDefinition->getMethod($data)[$method]['http_verb'];
 
       $token = $token ? $token : session('token', false);
+      //$token = 'ZmFiaW8uZ2FyY2lhQGh1YmNoYWluLmlvOlVyTmxCWDdPbVhhOThPVTA3bVFENURBOQ==';
       $data['headers'] = $this->methodDefinition->getHeaders($token);
 
       return $data;
@@ -75,7 +76,7 @@ class JiraRequestController extends Controller {
          }
 
          return response()->json('OK');
-      }else{
+      } else {
          return response()->json($response);
       }
    }
@@ -161,6 +162,7 @@ class JiraRequestController extends Controller {
    }
 
    public function syncAll(Request $request) {
+
       $this->syncUsers();
       $this->syncAllBoards();
 
@@ -176,9 +178,35 @@ class JiraRequestController extends Controller {
 
    public function login(Request $request) {
       $requestData = $request->only(['email', 'api_key']);
+      $error = false;
+
+      if (!isset($requestData['email']) || is_null($requestData['email'])) {
+         $error = 'E-mail inválido\n';
+      }
+      if (!isset($requestData['api_key']) || is_null($requestData['api_key'])) {
+         $error .= 'API Key inválida\n';
+      }
+
+      if ($error) {
+         return response()->json($error, 400);
+      }
+
       $encoded = base64_encode($requestData['email'] . ':' . $requestData['api_key']);
 
-      $data = $this->getCommonMethodData('MySelf', array());
+      $data = $this->getCommonMethodData('MySelf', array(), $encoded);
+
+      $response = RequestMethod::sendRequest($data);
+
+      if ($response['http_code'] == '200') {
+         $user = json_decode($response['response_body'], true);
+         $returnData = array();
+         $returnData['name'] = $user['displayName'];
+         $returnData['token'] = $encoded;
+         
+         return response()->json($returnData);
+      } else {
+         return response()->json('Auth fail', $response['http_code']);
+      }
    }
 
    public function test() {
