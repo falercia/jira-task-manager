@@ -32,6 +32,7 @@ class MethodDefinition {
           'AllUsers' => $this->getUsers(),
           'Issue' => $this->getIssue(isset($data['key']) ? $data['key'] : null),
           'MySelf' => $this->getMySelf(),
+          'Worklog' => $this->getWorklog(isset($data['key']) ? $data['key'] : null),
       ];
    }
 
@@ -46,9 +47,9 @@ class MethodDefinition {
           'http_verb' => 'GET'
       ];
    }
-   
-   private function getIssue($issueKey) {
-      return ['url' => $this->baseUrl .  '/rest/api/2/issue/' . $issueKey . '/?fields=' . $this->issueFields,
+
+   private function getIssue($key) {
+      return ['url' => $this->baseUrl . '/rest/api/2/issue/' . $key . '/?fields=' . $this->issueFields,
           'http_verb' => 'GET'
       ];
    }
@@ -58,12 +59,18 @@ class MethodDefinition {
           'http_verb' => 'GET'
       ];
    }
-   
+
    /**
     * Return current user data. Used by test credentials
     */
    private function getMySelf() {
       return ['url' => $this->baseUrl . '/rest/api/2/myself',
+          'http_verb' => 'GET'
+      ];
+   }
+
+   private function getWorklog($key) {
+      return ['url' => $this->baseUrl . '/rest/api/2/issue/' . $key . '/worklog',
           'http_verb' => 'GET'
       ];
    }

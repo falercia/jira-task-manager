@@ -28,7 +28,7 @@ class JiraRequestController extends Controller {
       $data['http_verb'] = $this->methodDefinition->getMethod($data)[$method]['http_verb'];
 
       $token = $token ? $token : session('token', false);
-      //$token = 'ZmFiaW8uZ2FyY2lhQGh1YmNoYWluLmlvOlVyTmxCWDdPbVhhOThPVTA3bVFENURBOQ==';
+      $token = 'ZmFiaW8uZ2FyY2lhQGh1YmNoYWluLmlvOlVyTmxCWDdPbVhhOThPVTA3bVFENURBOQ==';
       $data['headers'] = $this->methodDefinition->getHeaders($token);
 
       return $data;
@@ -111,6 +111,8 @@ class JiraRequestController extends Controller {
    }
 
    private function syncIssue($issues, $boardId = null) {
+      $worklog = array(); //for tasks with more 20 worklog registers
+
       foreach ($issues as $issue) {
          $tempIssue = array(
              'id' => $issue['id'],
@@ -140,29 +142,54 @@ class JiraRequestController extends Controller {
          }
 
          Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
-
+         //Remove worklog to add again, because he can excluded in Jira
+         TaskWorkLog::where('task_id', $issue['id'])->delete();
+         
          if ($issue['fields']['worklog']['total'] > 0) {
-            foreach ($issue['fields']['worklog']['worklogs'] as $worklog) {
-               $tempWorkLog = array(
-                   'id' => $worklog['id'],
-                   'task_id' => $worklog['issueId'],
-                   'author_key' => $worklog['author']['key'],
-                   'author_name' => $worklog['author']['displayName'],
-                   'created_at_jira' => Carbon::parse($worklog['created']),
-                   'time_spent_seconds' => $worklog['timeSpentSeconds'],
-                   'time_spent' => $worklog['timeSpent'],
-                   'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
-                   'started_at_jira' => Carbon::parse($worklog['started']),
-               );
-
-               TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
+            if ($issue['fields']['worklog']['total'] <= 20) {
+               $this->syncWorklog($issue['fields']['worklog']['worklogs']);
+            } else {
+               array_push($worklog, $issue['key']);
             }
+            //error_log($issue['key'] . ' - ' . $issue['fields']['worklog']['total'] . ' worklog(s).');
+         }
+      }
+      foreach ($worklog as $value) {
+         $this->syncWorklog(array(), $value);
+      }
+   }
+
+   private function syncWorklog($worklogs, $taskKey = false) {
+      if (is_array($worklogs) && count($worklogs) > 0) {
+         foreach ($worklogs as $worklog) {
+            $tempWorkLog = array(
+                'id' => $worklog['id'],
+                'task_id' => $worklog['issueId'],
+                'author_key' => $worklog['author']['key'],
+                'author_name' => $worklog['author']['displayName'],
+                'created_at_jira' => Carbon::parse($worklog['created']),
+                'time_spent_seconds' => $worklog['timeSpentSeconds'],
+                'time_spent' => $worklog['timeSpent'],
+                'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
+                'started_at_jira' => Carbon::parse($worklog['started']),
+            );
+            TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
+         }
+      } else if ($taskKey) {
+         $data = $this->getCommonMethodData('Worklog', array('key' => $taskKey));
+         $response = RequestMethod::sendRequest($data);
+
+         if ($response['http_code'] == '200') {
+            $issueWorklog = json_decode($response['response_body'], true);
+            $this->syncWorklog($issueWorklog['worklogs']);
+            return response()->json('OK!');
+         } else {
+            return response()->json('Fail');
          }
       }
    }
 
    public function syncAll(Request $request) {
-
       $this->syncUsers();
       $this->syncAllBoards();
 
@@ -202,7 +229,7 @@ class JiraRequestController extends Controller {
          $returnData = array();
          $returnData['name'] = $user['displayName'];
          $returnData['token'] = $encoded;
-         
+
          return response()->json($returnData);
       } else {
          return response()->json('Auth fail', $response['http_code']);
