@@ -3,9 +3,9 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Github%20repositories/jira-task-manager/JiraTaskManager/routes/api.php</file>
-            <file>file:/C:/Github%20repositories/jira-task-manager/JiraTaskManager/app/Common/MethodDefinition.php</file>
-            <file>file:/C:/Github%20repositories/jira-task-manager/JiraTaskManager/app/Http/Controllers/API/v1/JiraRequestController.php</file>
+            <file>file:/C:/Github%20repositories/jira-task-manager/app/Http/Controllers/API/v1/JiraRequestController.php</file>
+            <file>file:/C:/Github%20repositories/jira-task-manager/app/Common/MethodDefinition.php</file>
+            <file>file:/C:/Github%20repositories/jira-task-manager/.env</file>
         </group>
     </open-files>
 </project-private>
