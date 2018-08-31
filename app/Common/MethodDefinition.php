@@ -23,7 +23,7 @@ class MethodDefinition {
        * customfield_10113: test_deadline
        */
       $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created'
-              . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500';
+              . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500&jql="Finish date" is null';
    }
 
    public function getMethod($data = array()) {
