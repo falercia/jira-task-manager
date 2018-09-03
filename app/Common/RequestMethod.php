@@ -19,6 +19,8 @@ class RequestMethod {
       curl_setopt($request, CURLOPT_SSL_VERIFYHOST, 0);
       curl_setopt($request, CURLOPT_SSL_VERIFYPEER, 0);
       curl_setopt($request, CURLOPT_CUSTOMREQUEST, $data['http_verb']);
+      //To Fiddler test
+      //curl_setopt($request, CURLOPT_PROXY, '127.0.0.1:8888');
 
       if (isset($data['body']) && !is_null($data['body'])) {
          curl_setopt($request, CURLOPT_POSTFIELDS, $data['body']);

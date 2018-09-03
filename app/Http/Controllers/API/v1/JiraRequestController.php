@@ -12,7 +12,6 @@ use App\Models\Board;
 use App\User;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Support\Collection;
 
 class JiraRequestController extends Controller {
 
@@ -82,7 +81,6 @@ class JiraRequestController extends Controller {
    }
 
    public function getAllIssuesFromBoard($boardId) {
-
       $data = $this->getCommonMethodData('AllIssuesFromBoard', array('board_id' => $boardId));
 
       $response = RequestMethod::sendRequest($data);
@@ -90,9 +88,9 @@ class JiraRequestController extends Controller {
       if ($response['http_code'] == '200') {
          $issues = json_decode($response['response_body'], true)['issues'];
          $this->syncIssue($issues, $boardId);
-         return response()->json('OK!');
+         return true;
       } else {
-         return response()->json('Fail');
+         return 'Fail: ' . json_encode($response);
       }
    }
 
@@ -144,14 +142,13 @@ class JiraRequestController extends Controller {
          Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
          //Remove worklog to add again, because he can excluded in Jira
          TaskWorkLog::where('task_id', $issue['id'])->delete();
-         
+
          if ($issue['fields']['worklog']['total'] > 0) {
             if ($issue['fields']['worklog']['total'] <= 20) {
                $this->syncWorklog($issue['fields']['worklog']['worklogs']);
             } else {
                array_push($worklog, $issue['key']);
             }
-            //error_log($issue['key'] . ' - ' . $issue['fields']['worklog']['total'] . ' worklog(s).');
          }
       }
       foreach ($worklog as $value) {
@@ -197,7 +194,11 @@ class JiraRequestController extends Controller {
               ->get();
 
       foreach ($boards as $board) {
-         $this->getAllIssuesFromBoard($board['id']);
+         $success = $this->getAllIssuesFromBoard($board['id']);
+         //error_log(__CLASS__ . ' - ' . __FUNCTION__ . ' - '. __LINE__ . ' - ' .  $success);
+         if ($success !== true) {
+            return response()->json($success);
+         }
       }
 
       return response()->json('OK');

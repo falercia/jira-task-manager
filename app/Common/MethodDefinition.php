@@ -22,8 +22,7 @@ class MethodDefinition {
        * customfield_10112: test_initial_date
        * customfield_10113: test_deadline
        */
-      $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created'
-              . ',customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500&jql="Finish date" is null';
+      $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created,customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500';
    }
 
    public function getMethod($data = array()) {
@@ -43,7 +42,7 @@ class MethodDefinition {
    }
 
    private function getAllIssuesFromBoard($boardId) {
-      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=' . $this->issueFields,
+      return ['url' => $this->baseUrl . '/rest/agile/latest/board/' . $boardId . '/issue?fields=' . $this->issueFields . '&jql=%22Finish%20date%22%20is%20null',
           'http_verb' => 'GET'
       ];
    }
