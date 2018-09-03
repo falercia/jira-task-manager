@@ -17,9 +17,15 @@ class JiraRequestController extends Controller {
 
    private $methodDefinition;
    private $token;
+   private $returnData;
 
    public function __construct() {
       $this->methodDefinition = new MethodDefinition();
+      $this->returnData = array();
+      $this->returnData['boards'] = 0;
+      $this->returnData['tasks'] = 0;
+      $this->returnData['users'] = 0;
+      $this->returnData['worklogs'] = 0;
    }
 
    private function getCommonMethodData($method, $data = array(), $token = false) {
@@ -50,8 +56,8 @@ class JiraRequestController extends Controller {
                    'jira_key' => $user['key'],
                    'is_resource' => in_array($user['emailAddress'], array('alex.ritchie@hubchain.io', 'admin@hubchain.io', 'rodrigo.pimenta@hubchain.io')) ? 'N' : 'Y',
                );
-
                User::updateOrCreate(['id' => $tempUser['id']], $tempUser);
+               $this->returnData['users']++;
             }
          }
       }
@@ -70,8 +76,8 @@ class JiraRequestController extends Controller {
                 'name' => $board['location']['name'],
                 'type' => $board['type'],
             );
-
             Board::updateOrCreate(['id' => $tempBoard['id']], $tempBoard);
+            $this->returnData['boards']++;
          }
 
          return response()->json('OK');
@@ -140,6 +146,7 @@ class JiraRequestController extends Controller {
          }
 
          Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
+         $this->returnData['tasks']++;
          //Remove worklog to add again, because he can excluded in Jira
          TaskWorkLog::where('task_id', $issue['id'])->delete();
 
@@ -171,6 +178,7 @@ class JiraRequestController extends Controller {
                 'started_at_jira' => Carbon::parse($worklog['started']),
             );
             TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
+            $this->returnData['worklogs']++;
          }
       } else if ($taskKey) {
          $data = $this->getCommonMethodData('Worklog', array('key' => $taskKey));
@@ -197,11 +205,12 @@ class JiraRequestController extends Controller {
          $success = $this->getAllIssuesFromBoard($board['id']);
          //error_log(__CLASS__ . ' - ' . __FUNCTION__ . ' - '. __LINE__ . ' - ' .  $success);
          if ($success !== true) {
-            return response()->json($success);
+            $this->returnData['success'] = false;
+            return response()->json($this->returnData);
          }
       }
-
-      return response()->json('OK');
+      $this->returnData['success'] = true;
+      return response()->json($this->returnData);
    }
 
    public function login(Request $request) {
