@@ -132,7 +132,7 @@ class JiraRequestController extends Controller {
              'status_id' => $issue['fields']['status']['id'],
              'status_name' => $issue['fields']['status']['name'],
              'story_points' => isset($issue['fields']['customfield_10043']) ? $issue['fields']['customfield_10043'] : null,
-             'finish_date' => isset($issue['fields']['customfield_10111']) ? $issue['fields']['customfield_10111'] : null,
+             'finish_date' => isset($issue['fields']['resolutiondate']) ? $issue['fields']['resolutiondate'] : null,
              'status_category_id' => $issue['fields']['status']['statusCategory']['id'],
              'status_category_name' => $issue['fields']['status']['statusCategory']['name'],
              'test_initial_date' => $issue['fields']['customfield_10112'],
