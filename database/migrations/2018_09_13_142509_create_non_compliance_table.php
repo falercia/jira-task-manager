@@ -9,7 +9,7 @@ class CreateNonComplianceTable extends Migration {
    public function up() {
       Schema::create('non_compliance', function (Blueprint $table) {
          $table->increments('id');
-         $table->integer('user_id');
+         $table->string('user_id', 100);
          $table->string('description', 2000);
          $table->date('date');
          $table->enum('notified', ['Y', 'N']);
