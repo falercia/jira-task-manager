@@ -68,7 +68,7 @@ class NonComplianceController extends Controller {
                                        non_compliance nc
                                    INNER JOIN user u
                                       ON u.id = nc.user_id
-                                   WHERE nc.notified = 'N' and nc.id = 8");
+                                   WHERE nc.notified = 'N'");
       $count = 0;
       foreach ($nonCompliances as $nonCompliance) {
          $subject = 'Não conformidade #' . $nonCompliance->id . '/' . Carbon::parse($nonCompliance->date)->format('Y');
