@@ -12,6 +12,7 @@ use App\Models\Board;
 use App\User;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Support\Facades\Mail;
 
 class JiraRequestController extends Controller {
 
@@ -57,7 +58,7 @@ class JiraRequestController extends Controller {
                    'is_resource' => in_array($user['emailAddress'], array('alex.ritchie@hubchain.io', 'admin@hubchain.io', 'rodrigo.pimenta@hubchain.io')) ? 'N' : 'Y',
                );
                User::updateOrCreate(['id' => $tempUser['id']], $tempUser);
-               $this->returnData['users']++;
+               $this->returnData['users'] ++;
             }
          }
       }
@@ -77,7 +78,7 @@ class JiraRequestController extends Controller {
                 'type' => $board['type'],
             );
             Board::updateOrCreate(['id' => $tempBoard['id']], $tempBoard);
-            $this->returnData['boards']++;
+            $this->returnData['boards'] ++;
          }
 
          return response()->json('OK');
@@ -146,7 +147,7 @@ class JiraRequestController extends Controller {
          }
 
          Task::updateOrCreate(['id' => $tempIssue['id']], $tempIssue);
-         $this->returnData['tasks']++;
+         $this->returnData['tasks'] ++;
          //Remove worklog to add again, because he can excluded in Jira
          TaskWorkLog::where('task_id', $issue['id'])->delete();
 
@@ -178,7 +179,7 @@ class JiraRequestController extends Controller {
                 'started_at_jira' => Carbon::parse($worklog['started']),
             );
             TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
-            $this->returnData['worklogs']++;
+            $this->returnData['worklogs'] ++;
          }
       } else if ($taskKey) {
          $data = $this->getCommonMethodData('Worklog', array('key' => $taskKey));
@@ -247,26 +248,30 @@ class JiraRequestController extends Controller {
    }
 
    public function test() {
-      $initialDate = '23/07/2018';
-      $finalDate = '27/07/2018';
-      $return = DB::select('SELECT 
-                                 author_name,
-                                 started_at_jira,
-                                 SUM(time_spent_seconds) AS total,
-                                 SUM(time_spent_seconds) / 60 / 60 AS total_h
-                             FROM
-                                 jira_task_manager.task_worklog t
-                             WHERE
-                                 t.started_at_jira BETWEEN STR_TO_DATE(\'' . $initialDate . '\', \'%d/%m/%Y\') AND STR_TO_DATE(\'' . $finalDate . '\', \'%d/%m/%Y\')
-                             GROUP BY author_name , started_at_jira
-                             ORDER BY t.started_at_jira, t.author_name');
 
-      $collection = collect($return);
+      $nonCompliances = DB::select("SELECT 
+                                          u.name,
+                                          u.email,
+                                          nc.id,
+                                          nc.date,
+                                          nc.description,
+                                          nc.severity, 
+                                          nc.impact,
+                                          nc.action_plan,
+                                          nc.type,
+                                          case
+                                             when nc.severity = 'L' then '#70df6f;'
+                                             when nc.severity = 'M' then ''
+                                             when nc.severity = 'H' then ''
+                                              end as severity_color
+                                      FROM
+                                          jira_task_manager.non_compliance nc
+                                      INNER JOIN jira_task_manager.user u
+                                         ON u.id = nc.user_id
+                                      WHERE nc.notified = 'N'");
+      $nonCompliance = \App\Models\NonCompliance::find(1);
 
-      $grouped = $collection->groupBy('started_at_jira');
-      $grouped->toArray();
-      //$test = gmdate('H:i:s', $seconds);
-      return response()->json($grouped);
+      Mail::to('falercia@gmail.com')->send(new \App\Mail\SendMail($nonCompliance));
    }
 
 }

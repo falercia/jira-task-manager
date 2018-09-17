@@ -9,4 +9,5 @@ $this->group(['prefix' => 'v1'], function() {
    $this->get('test-get', 'API\v1\JiraRequestController@test');
    
    $this->post('sync-all', 'API\v1\JiraRequestController@syncAll');
+   $this->get('process-email', 'API\v1\NonComplianceController@processEmail');
 });

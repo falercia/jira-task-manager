@@ -13,9 +13,10 @@ class CreateNonComplianceTable extends Migration {
          $table->string('description', 2000);
          $table->date('date');
          $table->enum('notified', ['Y', 'N'])->default('N');
-         $table->date('notified_date')->nullable();
+         $table->datetime('notified_date')->nullable();
          $table->enum('severity', ['L', 'M', 'H']);
          $table->string('action_plan', 2000)->nullable();
+         $table->string('impact', 2000)->nullable();
          $table->string('employee_comment', 2000)->nullable();
          $table->date('employee_comment_date')->nullable();
          $table->enum('type', ['AF', 'MP', 'DF', 'TF'])
