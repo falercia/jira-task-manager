@@ -34,7 +34,7 @@ class JiraRequestController extends Controller {
       $data['http_verb'] = $this->methodDefinition->getMethod($data)[$method]['http_verb'];
 
       $token = $token ? $token : session('token', false);
-      $token = 'ZmFiaW8uZ2FyY2lhQGh1YmNoYWluLmlvOlVyTmxCWDdPbVhhOThPVTA3bVFENURBOQ==';
+      $token = env('JIRA_TEMP_DEFAULT_TOKEN');
       $data['headers'] = $this->methodDefinition->getHeaders($token);
 
       return $data;
