@@ -197,6 +197,7 @@ class JiraRequestController extends Controller {
    }
 
    public function syncAll(Request $request) {
+      error_log('start');
       $this->syncUsers();
       $this->syncAllBoards();
 
