@@ -34,7 +34,7 @@ class JiraRequestController extends Controller {
       $data['http_verb'] = $this->methodDefinition->getMethod($data)[$method]['http_verb'];
 
       $token = $token ? $token : session('token', false);
-      $token =  env('JIRA_TEMP_DEFAULT_TOKEN');
+      $token = env('JIRA_TEMP_DEFAULT_TOKEN');
       error_log(__CLASS__ . ' - ' . __FUNCTION__ . ' - ' . __LINE__ . ' - ' . json_encode($token));
       $data['headers'] = $this->methodDefinition->getHeaders($token);
 
@@ -247,6 +247,10 @@ class JiraRequestController extends Controller {
       } else {
          return response()->json('Auth fail', $response['http_code']);
       }
+   }
+
+   public function jiraWebHook(Request $request) {
+      error_log(json_encode($request));
    }
 
    public function test() {
