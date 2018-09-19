@@ -250,7 +250,7 @@ class JiraRequestController extends Controller {
    }
 
    public function jiraWebHook(Request $request) {
-      error_log(json_encode($request));
+      error_log(json_encode($request->getContent()));
    }
 
    public function test() {
