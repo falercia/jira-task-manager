@@ -35,7 +35,7 @@ class JiraRequestController extends Controller {
 
       $token = $token ? $token : session('token', false);
       $token = env('JIRA_TEMP_DEFAULT_TOKEN');
-      error_log(__CLASS__ . ' - ' . __FUNCTION__ . ' - ' . __LINE__ . ' - ' . json_encode($token));
+
       $data['headers'] = $this->methodDefinition->getHeaders($token);
 
       return $data;
@@ -197,7 +197,6 @@ class JiraRequestController extends Controller {
    }
 
    public function syncAll(Request $request) {
-      error_log('start');
       $this->syncUsers();
       $this->syncAllBoards();
 
@@ -250,7 +249,11 @@ class JiraRequestController extends Controller {
    }
 
    public function jiraWebHook(Request $request) {
-      error_log(json_encode($request->getContent()));
+      //error_log(json_encode($request->getContent()));
+
+      DB::table('test')->insert(
+              ['content' => $request->getContent()]
+      );
    }
 
    public function test() {
