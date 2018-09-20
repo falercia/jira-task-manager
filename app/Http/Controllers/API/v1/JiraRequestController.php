@@ -120,29 +120,7 @@ class JiraRequestController extends Controller {
       $worklog = array(); //for tasks with more 20 worklog registers
 
       foreach ($issues as $issue) {
-         $tempIssue = array(
-             'id' => $issue['id'],
-             'key' => $issue['key'],
-             'title' => $issue['fields']['summary'],
-             'assignee_key' => $issue['fields']['assignee']['key'],
-             'assignee_name' => $issue['fields']['assignee']['displayName'],
-             'tester_assignee_key' => isset($issue['fields']['customfield_10060']['key']) ? $issue['fields']['customfield_10060']['key'] : '',
-             'tester_assignee_name' => isset($issue['fields']['customfield_10060']['displayName']) ? $issue['fields']['customfield_10060']['displayName'] : '',
-             'jira_created_at' => Carbon::parse($issue['fields']['created']),
-             'initial_date' => $issue['fields']['customfield_10110'],
-             'deadline' => $issue['fields']['customfield_10108'],
-             'status_id' => $issue['fields']['status']['id'],
-             'status_name' => $issue['fields']['status']['name'],
-             'story_points' => isset($issue['fields']['customfield_10043']) ? $issue['fields']['customfield_10043'] : null,
-             'finish_date' => isset($issue['fields']['resolutiondate']) ? $issue['fields']['resolutiondate'] : null,
-             'status_category_id' => $issue['fields']['status']['statusCategory']['id'],
-             'status_category_name' => $issue['fields']['status']['statusCategory']['name'],
-             'test_initial_date' => $issue['fields']['customfield_10112'],
-             'test_deadline' => $issue['fields']['customfield_10113'],
-             'time_spent_seconds' => isset($issue['fields']['timetracking']['timeSpentSeconds']) ? $issue['fields']['timetracking']['timeSpentSeconds'] : null,
-             'time_spent' => isset($issue['fields']['timetracking']['timeSpent']) ? $issue['fields']['timetracking']['timeSpent'] : null,
-         );
-
+         $tempIssue = $this->convertJiraTaskData($issue);
          if (!is_null($boardId)) {
             $tempIssue['board_id'] = $boardId;
          }
@@ -168,17 +146,7 @@ class JiraRequestController extends Controller {
    private function syncWorklog($worklogs, $taskKey = false) {
       if (is_array($worklogs) && count($worklogs) > 0) {
          foreach ($worklogs as $worklog) {
-            $tempWorkLog = array(
-                'id' => $worklog['id'],
-                'task_id' => $worklog['issueId'],
-                'author_key' => $worklog['author']['key'],
-                'author_name' => $worklog['author']['displayName'],
-                'created_at_jira' => Carbon::parse($worklog['created']),
-                'time_spent_seconds' => $worklog['timeSpentSeconds'],
-                'time_spent' => $worklog['timeSpent'],
-                'comment' => isset($worklog['comment']) ? $worklog['comment'] : '',
-                'started_at_jira' => Carbon::parse($worklog['started']),
-            );
+            $tempWorkLog = $this->convertJiraWorklogData($worklog);
             TaskWorkLog::updateOrCreate(['id' => $tempWorkLog['id']], $tempWorkLog);
             $this->returnData['worklogs'] ++;
          }
@@ -248,12 +216,103 @@ class JiraRequestController extends Controller {
       }
    }
 
+   private function convertJiraTaskData($jiraTaskData) {
+      return array(
+          'id' => $jiraTaskData['id'],
+          'key' => $jiraTaskData['key'],
+          'title' => $jiraTaskData['fields']['summary'],
+          'assignee_key' => $jiraTaskData['fields']['assignee']['key'],
+          'assignee_name' => $jiraTaskData['fields']['assignee']['displayName'],
+          'tester_assignee_key' => isset($jiraTaskData['fields']['customfield_10060']['key']) ? $jiraTaskData['fields']['customfield_10060']['key'] : '',
+          'tester_assignee_name' => isset($jiraTaskData['fields']['customfield_10060']['displayName']) ? $jiraTaskData['fields']['customfield_10060']['displayName'] : '',
+          'jira_created_at' => Carbon::parse($jiraTaskData['fields']['created']),
+          'initial_date' => $jiraTaskData['fields']['customfield_10110'],
+          'deadline' => $jiraTaskData['fields']['customfield_10108'],
+          'status_id' => $jiraTaskData['fields']['status']['id'],
+          'status_name' => $jiraTaskData['fields']['status']['name'],
+          'story_points' => isset($jiraTaskData['fields']['customfield_10043']) ? $jiraTaskData['fields']['customfield_10043'] : null,
+          'finish_date' => isset($jiraTaskData['fields']['resolutiondate']) ? $jiraTaskData['fields']['resolutiondate'] : null,
+          'status_category_id' => $jiraTaskData['fields']['status']['statusCategory']['id'],
+          'status_category_name' => $jiraTaskData['fields']['status']['statusCategory']['name'],
+          'test_initial_date' => $jiraTaskData['fields']['customfield_10112'],
+          'test_deadline' => $jiraTaskData['fields']['customfield_10113'],
+          'time_spent_seconds' => isset($jiraTaskData['fields']['timetracking']['timeSpentSeconds']) ? $jiraTaskData['fields']['timetracking']['timeSpentSeconds'] : null,
+          'time_spent' => isset($jiraTaskData['fields']['timetracking']['timeSpent']) ? $jiraTaskData['fields']['timetracking']['timeSpent'] : null,
+      );
+   }
+
+   private function convertJiraWorklogData($worklogData) {
+      return array(
+          'id' => $worklogData['id'],
+          'task_id' => $worklogData['issueId'],
+          'author_key' => $worklogData['author']['key'],
+          'author_name' => $worklogData['author']['displayName'],
+          'created_at_jira' => Carbon::parse($worklogData['created']),
+          'time_spent_seconds' => $worklogData['timeSpentSeconds'],
+          'time_spent' => $worklogData['timeSpent'],
+          'comment' => isset($worklogData['comment']) ? $worklogData['comment'] : '',
+          'started_at_jira' => Carbon::parse($worklogData['started']),
+      );
+   }
+
    public function jiraWebHook(Request $request) {
       //error_log(json_encode($request->getContent()));
+      $data = json_decode($request->getContent(), true);
 
-      DB::table('test')->insert(
-              ['content' => $request->getContent()]
-      );
+      switch ($data['webhookEvent']) {
+         case 'jira:issue_created':
+            $this->insertTaskJiraWebhook($data['issue']);
+            break;
+         case 'jira:issue_updated':
+            $this->updateTaskJiraWebhook($data['issue']);
+            break;
+         case 'jira:issue_deleted':
+            $this->deleteTaskJiraWebhook($data['issue']);
+            break;
+         case 'worklog_created':
+            $this->insertWorklogJiraWebhook($data['worklog']);
+            break;
+         case 'worklog_updated':
+            $this->updateWorklogJiraWebhook($data['worklog']);
+            break;
+         case 'worklog_deleted':
+            $this->deleteWorklogJiraWebhook($data['worklog']);
+            break;
+      }
+
+      return response()->json($data['webhookEvent']);
+//      DB::table('test')->insert(
+//              ['content' => $request->getContent()]
+//      );
+   }
+
+   //Task functions
+   private function insertTaskJiraWebhook($issueData) {
+      Task::create($this->convertJiraTaskData($issueData));
+   }
+
+   private function updateTaskJiraWebhook($issueData) {
+      $task = Task::find($issueData['id']);
+      $task->update($this->convertJiraTaskData($issueData));
+   }
+
+   private function deleteTaskJiraWebhook($issueData) {
+      $task = Task::find($issueData['id']);
+      TaskWorkLog::where('task_id', $issueData['id'])->delete();
+      $task->delete();
+   }
+
+   //Worlog functions
+   private function insertWorklogJiraWebhook($worklogData) {
+      
+   }
+
+   private function updateWorklogJiraWebhook($worklogData) {
+      
+   }
+
+   private function deleteWorklogJiraWebhook($worklogData) {
+      
    }
 
    public function test() {
