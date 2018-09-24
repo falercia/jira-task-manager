@@ -288,10 +288,8 @@ class JiraRequestController extends Controller {
 
    //Task functions
    private function insertTaskJiraWebhook($issueData) {
-      error_log(json_encode($issueData));
-      error_log('####');
-      error_log(json_encode($this->convertJiraTaskData($issueData)));
-      Task::create($this->convertJiraTaskData($issueData));
+      $task = Task::create($this->convertJiraTaskData($issueData));
+      error_log($task);
    }
 
    private function updateTaskJiraWebhook($issueData) {
