@@ -77,6 +77,7 @@ class JiraRequestController extends Controller {
                 'id' => $board['id'],
                 'name' => $board['location']['name'],
                 'type' => $board['type'],
+                'project_id' => $board['location']['projectId'],
             );
             Board::updateOrCreate(['id' => $tempBoard['id']], $tempBoard);
             $this->returnData['boards'] ++;
@@ -255,10 +256,20 @@ class JiraRequestController extends Controller {
       );
    }
 
+   private function getBoardId($projectId) {
+      $board = Board::where('project_id', '=', $projectId)->firstOrFail();
+
+      if ($board) {
+         return $board['id'];
+      } else {
+         return -1;
+      }
+   }
+
    public function jiraWebHook(Request $request) {
       //error_log(json_encode($request->getContent()));
       $data = json_decode($request->getContent(), true);
-      error_log('event: '. $data['webhookEvent']);
+      error_log('event: ' . $data['webhookEvent']);
       switch ($data['webhookEvent']) {
          case 'jira:issue_created':
             $this->insertTaskJiraWebhook($data['issue']);
@@ -288,8 +299,10 @@ class JiraRequestController extends Controller {
 
    //Task functions
    private function insertTaskJiraWebhook($issueData) {
-      $task = Task::create($this->convertJiraTaskData($issueData));
-      error_log($task);
+      $convertedTask = $this->convertJiraTaskData($issueData);
+      $convertedTask['board_id'] = $this->getBoardId($issueData['fields']['project']['id']);
+      
+      Task::create($convertedTask);
    }
 
    private function updateTaskJiraWebhook($issueData) {

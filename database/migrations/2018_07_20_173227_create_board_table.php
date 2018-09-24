@@ -9,6 +9,7 @@ class CreateBoardTable extends Migration {
    public function up() {
       Schema::create('board', function (Blueprint $table) {
          $table->integer('id');
+         $table->integer('project_id');
          $table->string('name', 500);
          $table->string('type', 500);
          $table->enum('sync_board', ['Y', 'N'])->default('Y');
