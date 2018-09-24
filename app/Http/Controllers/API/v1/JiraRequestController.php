@@ -301,7 +301,7 @@ class JiraRequestController extends Controller {
    private function insertTaskJiraWebhook($issueData) {
       $convertedTask = $this->convertJiraTaskData($issueData);
       $convertedTask['board_id'] = $this->getBoardId($issueData['fields']['project']['id']);
-      
+
       Task::create($convertedTask);
    }
 
@@ -318,15 +318,17 @@ class JiraRequestController extends Controller {
 
    //Worlog functions
    private function insertWorklogJiraWebhook($worklogData) {
-      
+      TaskWorkLog::create($this->convertJiraWorklogData($worklogData));
    }
 
    private function updateWorklogJiraWebhook($worklogData) {
-      
+      $taskWorklog = TaskWorkLog::find($worklogData['id']);
+      $taskWorklog->update($this->convertJiraWorklogData($worklogData));
    }
 
    private function deleteWorklogJiraWebhook($worklogData) {
-      
+      $taskWorklog = TaskWorkLog::find($worklogData['id']);
+      $taskWorklog->delete();
    }
 
    public function test() {
