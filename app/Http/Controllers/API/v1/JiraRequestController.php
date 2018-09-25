@@ -50,7 +50,7 @@ class JiraRequestController extends Controller {
       if ($response['http_code'] == '200') {
          $users = json_decode($response['response_body'], true);
          foreach ($users as $user) {
-            if (strpos($user['emailAddress'], '@hubchain.io')) {
+            if (strpos($user['emailAddress'], '@hubchain.io') || strpos($user['emailAddress'], '@hubchain.com')) {
                $tempUser = array(
                    'id' => $user['accountId'],
                    'name' => $user['displayName'],
