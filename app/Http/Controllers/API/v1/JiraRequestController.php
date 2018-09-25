@@ -56,7 +56,7 @@ class JiraRequestController extends Controller {
                    'name' => $user['displayName'],
                    'email' => $user['emailAddress'],
                    'jira_key' => $user['key'],
-                   'is_resource' => in_array($user['emailAddress'], array('alex.ritchie@hubchain.io', 'admin@hubchain.io', 'rodrigo.pimenta@hubchain.io')) ? 'N' : 'Y',
+                   'is_resource' => in_array($user['emailAddress'], array('alex.ritchie@hubchain.io', 'admin@hubchain.io', 'rodrigo.pimenta@hubchain.io', 'miguel.cece@hubchain.io', 'paulo.stahl@hubchain.com', 'thais.efland@hubchain.com')) ? 'N' : 'Y',
                );
                User::updateOrCreate(['id' => $tempUser['id']], $tempUser);
                $this->returnData['users'] ++;
