@@ -239,6 +239,7 @@ class JiraRequestController extends Controller {
           'test_deadline' => $jiraTaskData['fields']['customfield_10113'],
           'time_spent_seconds' => isset($jiraTaskData['fields']['timetracking']['timeSpentSeconds']) ? $jiraTaskData['fields']['timetracking']['timeSpentSeconds'] : null,
           'time_spent' => isset($jiraTaskData['fields']['timetracking']['timeSpent']) ? $jiraTaskData['fields']['timetracking']['timeSpent'] : null,
+          'has_impediment' => isset($jiraTaskData['fields']['customfield_10115']['value']) ? 'Y' : 'N',
       );
    }
 

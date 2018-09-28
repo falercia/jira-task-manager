@@ -21,8 +21,9 @@ class MethodDefinition {
        * customfield_10111: finish_date
        * customfield_10112: test_initial_date
        * customfield_10113: test_deadline
+       * customfield_10115: has_impediment
        */
-      $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created,customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking&maxResults=500';
+      $this->issueFields = 'assignee,description,summary,status,customfield_10110,customfield_10108,customfield_10060,worklog,created,customfield_10043,customfield_10111,customfield_10112,customfield_10113,timetracking,customfield_10115&maxResults=500';
    }
 
    public function getMethod($data = array()) {

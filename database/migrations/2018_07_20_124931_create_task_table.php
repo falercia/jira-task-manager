@@ -29,6 +29,7 @@ class CreateTaskTable extends Migration {
          $table->string('status_category_name');
          $table->bigInteger('time_spent_seconds')->nullable();
          $table->string('time_spent', 100)->nullable();
+         $table->enum('has_impediment', ['Y', 'N'])->default('N');
 
          $table->timestamps();
 
