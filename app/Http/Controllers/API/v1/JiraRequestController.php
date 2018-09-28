@@ -268,9 +268,9 @@ class JiraRequestController extends Controller {
    }
 
    public function jiraWebHook(Request $request) {
-      //error_log(json_encode($request->getContent()));
+      
       $data = json_decode($request->getContent(), true);
-      error_log('event: ' . $data['webhookEvent']);
+      
       switch ($data['webhookEvent']) {
          case 'jira:issue_created':
             $this->insertTaskJiraWebhook($data['issue']);
